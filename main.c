@@ -54,7 +54,13 @@ int main() {
     for(i=0; i<num_semis+1; i++){
       f = fork();
 
-      if(f == 0){	
+      char *temp = NULL;
+      
+      if(f == 0){
+	if(temp = trim_trailing(sep_args[i], ' '), " "){
+	  if(strcmp(temp, "cd"))
+	    chdir(
+	  
 	args = parse_input(trim_trailing(sep_args[i], ' '), " ");	
 	execvp(args[0], args);
       } else if (f > 0) {
