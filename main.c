@@ -7,9 +7,11 @@
 #include <sys/wait.h>
 
 int cont();
-char **parse_input(char *);
-int get_num_phrases(char *);
+
+char **parse_input(char *, char *);
 char *trim_string(char *, int);
+int count_occurrences(char *, char);
+char *trim_trailing(char *, char);
 
 /*
 
@@ -33,22 +35,36 @@ char *trim_string(char *, int);
 
 */
 
-
 int main() {  
   char input[256];
+  char *trimmed_input;
+  char **sep_args; // semi-colon separated args
+  char **args;
+  int f;
 
   while(cont()) {
     printf("<shell> ");
     fgets(input, sizeof(input), stdin);
+    trimmed_input = trim_string(input, strlen(input)-1); // trims out garbage in input; subtract one for \n
+    
+    int i, num_semis = count_occur(trimmed_input, ";");
+    
+    sep_args = parse_input(trimmed_input, ";"); // separates by semi-colon, double pointer    
 
-    int f = fork();
+    for(i=0; i<num_semis+1; i++){
+      f = fork();
 
-    if(f == 0){
-      char **args = parse_input(trim_string(input, strlen(input)));;
-      execvp(args[0], args);
-    } else {
-      int status, child_pid = wait(&status);
+      if(f == 0){	
+	args = parse_input(trim_trailing(sep_args[i], ' '), " ");	
+	execvp(args[0], args);
+      } else if (f > 0) {
+	int status, child_pid = wait(&status);
+      } else {
+	// ERROR CHECK!!!
+	printf("Error forking!\n");
+      }
     }
+
   }
   
   return 0;
@@ -58,7 +74,7 @@ int cont(){
   return 1;
 }
 
-int get_num_phrases(char *s){
+int get_num_phrases(char *s, char delimiter){
   char valid_phrase = 0;
   int i, num_phrases = 0;
   
@@ -77,13 +93,13 @@ int get_num_phrases(char *s){
   return num_phrases;
 }
 
-char **parse_input(char *line){
+char **parse_input(char *line, char *delimiter){
   int i=0;
   char *curr_arg = NULL;
-  char **ret_args = (char **)malloc(sizeof(char *) * (get_num_phrases(line)+1));
+  char **ret_args = (char **)malloc(sizeof(char *) * (count_occur(line, delimiter)+2));
   
-  while(curr_arg = strsep(&line, " ")){
-    ret_args[i] = curr_arg;    
+  while(curr_arg = strsep(&line, delimiter)){
+    ret_args[i] = curr_arg;
     i++;
   }
 
@@ -92,14 +108,56 @@ char **parse_input(char *line){
   return ret_args;
 }
 
+/* Leaves only size characters, not including terminating null */
 char *trim_string(char *s, int size) {
   int i;
   char *ret_str = (char *)malloc(size+1);
   
-  ret_str[size-1] = '\0';
+  ret_str[size] = '\0';
   
-  for(i=0; i<size-1; i++)
+  for(i=0; i<size; i++)
     ret_str[i] = s[i];
 
   return ret_str;
+}
+
+/* Trims characters c from beginning and end of string */
+char *trim_trailing(char *s, char c){
+  int i, count=0, count2=0;  
+
+  for(i=0; i<strlen(s); i++){
+    if(s[i] == c)
+      count++;
+    else
+      break;
+  }
+
+  for(i=strlen(s)-1; i>=0; i--){
+    if(s[i] == c)
+      count2++;
+    else
+      break;
+  }
+
+  char *ret_str = malloc(strlen(s)-count-count2+1);
+
+  ret_str[strlen(ret_str)-count-count2] = '\0';
+
+  for(i=count; i<strlen(s)-count2; i++)
+    ret_str[i-count] = s[i];
+
+  return ret_str;
+}
+
+/* Counts occurrences of substring occ in s */
+int count_occur(char *s, char *occ){
+  int count = 0;
+  char *rem = s;
+
+  while(rem = strstr(rem, occ)){
+    count++;
+    rem++;
+  }
+
+  return count;
 }
