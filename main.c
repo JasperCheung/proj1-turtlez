@@ -44,19 +44,36 @@ int main() {
     fgets(input, sizeof(input), stdin);
     trimmed_input = trim_string(input, strlen(input)-1); // trims out garbage in input; subtract one for \n
     
-    int i, num_semis = count_occur(trimmed_input, ";");
+    int i;
+    int num_semis = count_occur(trimmed_input, ";");
+    
     
     sep_args = parse_input(trimmed_input, ";"); // separates by semi-colon, double pointer    
 
     for(i=0; i<num_semis+1; i++){
+      int num_rights = count_occur(trimmed_input, ">");
+      int num_lefts = count_occur(trimmed_input, "<");
+      
       args = parse_input(trim_trailing(sep_args[i], ' '), " ");
 
-      if(strcmp(args[0], "cd") == 0){
+      if(num_rights > 0){
+	char *first = args[0];
+	char *second = args[2];
+	
+	printf("First >%s< and second >%s<\n", first, second);
+
+	f = fork();
+
+	if(f == 0){
+	  dup(1);
+	}
+	
+      } else if(strcmp(args[0], "cd") == 0){
 	int ret = chdir(args[1]);
 	printf("Entered new directory >%s< !\n", args[1]);	
       } else if (strcmp(args[0], "exit") == 0){
 	return 0;
-      } else {
+      } else {	
 	f = fork();
 
 	if(f == 0){
@@ -70,7 +87,6 @@ int main() {
       }
     }
   }
-  
   return 0;
 }
 
