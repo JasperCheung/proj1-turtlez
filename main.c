@@ -65,7 +65,17 @@ int main() {
 	f = fork();
 
 	if(f == 0){
-	  dup(1);
+	  int fd = open(second, O_CREAT | O_WRONLY, 0666);
+	  int fd2 = dup(fd);
+	  dup2(fd,1);
+	  close(1);
+	  
+	  /* execvp(args[0], args); run the function */
+	  dup2(fd, fd2);
+	  close(fd);
+	  
+	}else if (f > 0) {
+	  int status, child_pid = wait(&status);
 	}
 	
       } else if(strcmp(args[0], "cd") == 0){
