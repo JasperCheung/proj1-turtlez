@@ -6,6 +6,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include "parse.h"
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #define TRUE 1
 
@@ -53,32 +55,38 @@ int main() {
     for(i=0; i<num_semis+1; i++){
       int num_rights = count_occur(trimmed_input, ">");
       int num_lefts = count_occur(trimmed_input, "<");
-      
-      args = parse_input(trim_trailing(sep_args[i], ' '), " ");
 
       if(num_rights > 0){
-	char *first = args[0];
-	char *second = args[2];
+	args = parse_input(trim_trailing(sep_args[i], ' '), ">");
+	// "cat hello.txt > new.txt"
+	// args = {"cat hello.txt ", " new.txt"}
+
+	char **first = parse_input(trim_trailing(args[0], ' '), " ");
+	// first = {"cat", "hello.txt"}
+	char *second = trim_trailing(args[1], ' ');
+	// second = "new.txt"
 	
-	printf("First >%s< and second >%s<\n", first, second);
+	printf(">%s< >%s< >%s<\n", first[0], first[1], second);
 
 	f = fork();
 
 	if(f == 0){
 	  int fd = open(second, O_CREAT | O_WRONLY, 0666);
-	  int fd2 = dup(fd);
+	  int out_cp = dup(1);
 	  dup2(fd,1);
-	  close(1);
 	  
-	  /* execvp(args[0], args); run the function */
-	  dup2(fd, fd2);
-	  close(fd);
-	  
-	}else if (f > 0) {
+	  execvp(first[0], first); /* run the function */
+	  dup2(out_cp, 1);
+	  close(out_cp);
+	  close(fd);	  
+	} else if (f > 0) {
 	  int status, child_pid = wait(&status);
-	}
-	
-      } else if(strcmp(args[0], "cd") == 0){
+	}			 
+      } else {
+	args = parse_input(trim_trailing(sep_args[i], ' '), " ");
+      }
+
+      if(strcmp(args[0], "cd") == 0){
 	int ret = chdir(args[1]);
 	printf("Entered new directory >%s< !\n", args[1]);	
       } else if (strcmp(args[0], "exit") == 0){
