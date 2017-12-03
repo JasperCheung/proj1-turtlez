@@ -66,7 +66,7 @@ int main() {
     sep_args = parse_input(trimmed_input, ";"); // separates by semi-colon, double pointer
 
     
-    int num_out_redirs, num_in_redirs;
+    int num_out_redirs, num_in_redirs, num_pipe;
 
     char **args = NULL;
     char *new_trimmed = NULL;
@@ -78,6 +78,7 @@ int main() {
       new_trimmed = trim_trailing(sep_args[i], ' ');
       num_out_redirs = count_occur(new_trimmed, ">");
       num_in_redirs = count_occur(new_trimmed, "<");
+      num_pipe = count_occur(new_trimmed, "|");
 
       int out_cp, in_cp;
       int fd;
@@ -124,7 +125,7 @@ int main() {
 	  close(file_des[READ]);
 	  
 	  dup2(out_cp, 1);
-	  close(out_cp);	  ;	  
+	  close(out_cp);	  	  
 	} else {
 	  print_error();
 	}	
@@ -156,7 +157,7 @@ int main() {
 	  close(in_cp);
 	} else {
 	  print_error();
-	}	
+	}
       } else if (count_occur(new_trimmed, "|")) {
 	args = parse_input(trim_trailing(sep_args[i], ' '), "|");
       } else {
@@ -166,13 +167,16 @@ int main() {
       if(strcmp(args[0], "cd") == 0){
 	if(chdir(args[1]) < 0)
 	  print_error();
-      } else if (!strcmp(args[0], "exit")){	
-	return 0;
+      }
+      else if(strcmp(args[0], "exit") == 0){
+	  exit(0);
+	      
       } else {	
 	fork_ret = fork();
 
 	if(fork_ret == 0) {
 	  execvp(args[0], args);
+	  return 0;
 	} else if (fork_ret > 0) {
 	  int status, child_pid = wait(&status);
 	} else {
