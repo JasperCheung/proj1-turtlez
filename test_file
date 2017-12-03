@@ -1,0 +1,8 @@
+cat < test_file
+ls -l; pwd; ps
+cd ..; ls -l
+cd proj1-turtlez
+echo "hi there!" > new.txt
+cat new.txt ; ps | cat
+echo "exit" | ./target
+exit

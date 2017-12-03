@@ -4,7 +4,8 @@
 
 
 /*
-Parses string line by delimiter, returning an array to pointers.
+  Parses string line by delimiter, returning an array to pointers. Changes
+  the original string line.
 */
 char **parse_input(char *line, char *delimiter){
   int i=0;
@@ -23,7 +24,8 @@ char **parse_input(char *line, char *delimiter){
 
 
 /* 
-Returns substring of size characters, not including terminating null
+   Returns substring of size characters, not including terminating null.
+   Returns a copy.
 */
 char *trim_string(char *s, int size) {
   int i;
@@ -39,10 +41,11 @@ char *trim_string(char *s, int size) {
 
 
 /* 
-Trims characters c from the beginning and end of string s
+   Trims characters c from the beginning and end of string s.
+   Returns a COPY
 
-Ex.)
-trim_trailing("aaacataa", 'a') -> "cat"
+   Ex.)
+   trim_trailing("aaacataa", 'a') -> "cat"
 */
 char *trim_trailing(char *s, char c){
   int i, count=0, count2=0;  
@@ -74,7 +77,7 @@ char *trim_trailing(char *s, char c){
 
 
 /* 
-Returns the number of occurrences of substring occ in string s
+   Returns the number of occurrences of substring occ in string s
 */
 int count_occur(char *s, char *occ){
   int count = 0;
