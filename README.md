@@ -7,10 +7,6 @@
 
 
 ## Attempted:
--	The following did not end up working, but have been left in the code, commented out
--	pipes 
--   not implemented, >>.
--	Looked at replacing ~/ with home directory, got seg faults
 
 ## Bugs:
 -	Exiting terminal by typing "exit" may not work consistently
@@ -62,4 +58,37 @@ found by adding 1 onto the return value.
 ```
 
 ### main.c
-Handles the forking and executing of commands...
+Handles the forking and executing of commands
+
+```
+/*======== void print_error() ==========
+Inputs: 
+
+Returns: Prints error message sent to errno 
+====================*/
+
+/*======== int handle_general_commands() ==========
+Inputs: char *command
+
+Returns: -1 when error, or execvp runs
+====================*/
+
+/*======== void redirect() ==========
+Inputs: int base_fd
+int fd
+char *first
+char *second
+
+Returns: Redirects output of command first to command second. 
+File descriptor fd represents entry of command second. 
+base_fd is the placeholdered file descriptor which command first will output to.
+====================*/
+
+/*======== void redirect_exec() ==========
+Inputs: int base_fd
+char *first
+
+Returns:  Executes command first, then redirects its stdout to base_fd.
+Reverts back to original file table when finished.
+====================*/
+
