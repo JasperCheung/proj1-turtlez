@@ -2,6 +2,10 @@
 #include <string.h>
 #include "parse.h"
 
+
+/*
+Parses string line by delimiter, returning an array to pointers.
+*/
 char **parse_input(char *line, char *delimiter){
   int i=0;
   char *curr_arg = NULL;
@@ -17,7 +21,10 @@ char **parse_input(char *line, char *delimiter){
   return ret_args;
 }
 
-/* Leaves only size characters, not including terminating null */
+
+/* 
+Returns substring of size characters, not including terminating null
+*/
 char *trim_string(char *s, int size) {
   int i;
   char *ret_str = (char *)malloc(size+1);
@@ -30,7 +37,13 @@ char *trim_string(char *s, int size) {
   return ret_str;
 }
 
-/* Trims characters c from beginning and end of string */
+
+/* 
+Trims characters c from the beginning and end of string s
+
+Ex.)
+trim_trailing("aaacataa", 'a') -> "cat"
+*/
 char *trim_trailing(char *s, char c){
   int i, count=0, count2=0;  
 
@@ -48,9 +61,10 @@ char *trim_trailing(char *s, char c){
       break;
   }
 
-  char *ret_str = malloc(strlen(s)-count-count2+1);
+  int ret_str_size = strlen(s)-count-count2+1;
+  char *ret_str = malloc(ret_str_size);
 
-  ret_str[strlen(ret_str)-count-count2] = '\0';
+  ret_str[ret_str_size-1] = '\0';
 
   for(i=count; i<strlen(s)-count2; i++)
     ret_str[i-count] = s[i];
@@ -58,7 +72,10 @@ char *trim_trailing(char *s, char c){
   return ret_str;
 }
 
-/* Counts occurrences of substring occ in s */
+
+/* 
+Returns the number of occurrences of substring occ in string s
+*/
 int count_occur(char *s, char *occ){
   int count = 0;
   char *rem = s;
