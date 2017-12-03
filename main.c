@@ -11,7 +11,9 @@
 
 #include "parse.h"
 
+#define FALSE 0
 #define TRUE 1
+
 #define S_KEY 2017
 #define S_KEY2 2018
 
@@ -46,14 +48,88 @@
 */
 
 
+/* 
+   Prints error message sent to errno 
+*/
 void print_error(){
-  printf("Error: %s\n", strerror(errno));	
+  printf("Error: %s\n", strerror(errno));
 }
+
+
+/* 
+   Reads in commands args and executes them. If they can't be executed,
+   an error message is printed out 
+*/
+void handle_general_commands(char **args){
+  if(strcmp(args[0], "cd") == 0){
+    if(chdir(args[1]) < 0)
+      print_error();
+  } else if(strcmp(args[0], "exit") == 0){
+    exit(0);	      
+  } else {	
+    int fork_ret = fork();
+
+    if(fork_ret == 0) {
+      execvp(args[0], args);
+      exit(0);
+    } else if (fork_ret > 0) {
+      int status, child_pid = wait(&status);
+    } else {
+      print_error();
+    }
+  }
+}
+
+
+/* 
+   Replaces base_fd with fd, then runs execution code of first (>\<) second, then 
+   adds back base_fd and removes fd from file table. 
+
+   base_fd can be 0 for stdin, or 1 for stdout
+*/
+void redirect(int *file_des, int base_fd, char **first, char *second){
+  
+  int fork_ret = fork();
+  int fd, copy;
+	
+  if(fork_ret == 0){
+    fd = open(second, O_CREAT | O_RDWR, 0666);	  
+    copy = dup(base_fd);
+    dup2(fd, base_fd);
+
+    /* Writes to pipe, changing value copy */
+    close(file_des[READ]);
+    write(file_des[WRITE], &copy, sizeof(copy));
+
+    close(fd);
+    
+    if(execvp(first[0], first) < 0)
+      print_error();
+    
+    exit(0);
+  } else if (fork_ret > 0){
+    int status;
+    wait(&status);
+
+    /* Reads in from pipe */
+    close(file_des[WRITE]);
+    read(file_des[READ], &copy, sizeof(copy));
+    close(file_des[READ]);
+	  
+    dup2(copy, base_fd);
+    close(copy);
+  } else {
+    print_error();
+  }
+}
+
 
 int main() {  
   char input[256];  
   char **sep_args = NULL; // semi-colon separated args
-  char *trimmed_input = NULL;  
+  char **args = NULL;
+  char *trimmed_input = NULL;
+  char *new_trimmed = NULL;
   int fork_ret;
   int num_semis;
 
@@ -68,7 +144,7 @@ int main() {
     
     int num_out_redirs, num_in_redirs, num_pipe;
 
-    char **args = NULL;
+    
     char *new_trimmed = NULL;
 
     int i;
@@ -76,6 +152,7 @@ int main() {
       
       /* Individual trimmed command */
       new_trimmed = trim_trailing(sep_args[i], ' ');
+      
       num_out_redirs = count_occur(new_trimmed, ">");
       num_in_redirs = count_occur(new_trimmed, "<");
       num_pipe = count_occur(new_trimmed, "|");
@@ -83,7 +160,7 @@ int main() {
       int out_cp, in_cp;
       int fd;
       
-      char **first = NULL, *second = NULL;      
+      char **first = NULL, *second = NULL;
       
       if(num_out_redirs > 0 || num_in_redirs > 0){
 	if(num_out_redirs > 0)
@@ -99,101 +176,29 @@ int main() {
       
       int file_des[2];
       pipe(file_des);
-      
-      if(num_out_redirs > 0){
-	fork_ret = fork();
-	
-	if(fork_ret == 0){
-	  fd = open(second, O_CREAT | O_WRONLY, 0666);	  
-	  out_cp = dup(1);
-	  dup2(fd, 1);
 
-	  /* Writes to pipe, changing value out_cp */
-	  close(file_des[READ]);
-	  write(file_des[WRITE], &out_cp, sizeof(out_cp));
-
-	  close(fd);
-	  
-	  execvp(first[0], first);
-	} else if (fork_ret > 0){
-	  int status;
-	  wait(&status);
-
-	  /* Reads in from pipe */
-	  close(file_des[WRITE]);
-	  read(file_des[READ], &out_cp, sizeof(out_cp));
-	  close(file_des[READ]);
-	  
-	  dup2(out_cp, 1);
-	  close(out_cp);	  	  
-	} else {
-	  print_error();
-	}	
-      } else if(num_in_redirs > 0){
-	fork_ret = fork();
-	
-	if(fork_ret == 0){
-	  fd = open(second, O_CREAT | O_WRONLY, 0666);
-	  in_cp = dup(0);
-	  dup2(fd, 0);
-
-	  /* Writes to pipe, changing value out_cp */
-	  close(file_des[READ]);
-	  write(file_des[WRITE], &in_cp, sizeof(in_cp));
-
-	  close(fd);
-	  
-	  execvp(first[0], first);
-	} else if (fork_ret > 0){
-	  int status;
-	  wait(&status);
-
-	  /* Reads in from pipe */
-	  close(file_des[WRITE]);
-	  read(file_des[READ], &in_cp, sizeof(in_cp));
-	  close(file_des[READ]);
-	  
-	  dup2(in_cp, 0);
-	  close(in_cp);
-	} else {
-	  print_error();
-	}
-      } else if (count_occur(new_trimmed, "|")) {
+      /* Redirection */
+      if(num_out_redirs > 0)
+	redirect(file_des, STDOUT_FILENO, first, second);
+      else if(num_in_redirs > 0)
+	redirect(file_des, STDIN_FILENO, first, second);	
+      else if (count_occur(new_trimmed, "|"))
 	args = parse_input(trim_trailing(sep_args[i], ' '), "|");
-      } else {
+      else
 	args = parse_input(trim_trailing(sep_args[i], ' '), " ");
-      }
-	
-      if(strcmp(args[0], "cd") == 0){
-	if(chdir(args[1]) < 0)
-	  print_error();
-      }
-      else if(strcmp(args[0], "exit") == 0){
-	  exit(0);
-	      
-      } else {	
-	fork_ret = fork();
 
-	if(fork_ret == 0) {
-	  execvp(args[0], args);
-	  return 0;
-	} else if (fork_ret > 0) {
-	  int status, child_pid = wait(&status);
-	} else {
-	  print_error();
-	}
-      }
+      if(num_out_redirs == 0 && num_in_redirs == 0 && num_pipe == 0)
+	handle_general_commands(args);
       
       free(first);
       free(second);
     }
-
-    free(new_trimmed);    
-    free(args);
   }
 
   free(trimmed_input);
+  free(args);
   free(sep_args);
+  free(new_trimmed);
   
   return 0;
 }
