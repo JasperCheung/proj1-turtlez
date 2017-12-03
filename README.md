@@ -20,13 +20,15 @@
 ### parse.c
 Handles all line parsing fucntions
 
+```
+
 /*======== char **parse_input() =========
 Inputs:  char *line
-char* delimiter
-Returns: Array of char pointers, with each char pointer being a token
-of line separated by string delimiter
+          char* delimiter
 
-Separates string line by the string delimiter.
+Returns: Array of char pointers, with each char pointer being a token
+of line separated by string delimiter. Separates string line by the 
+string delimiter.
 ====================*/
 
 /*======== char *trim_string() =========
@@ -57,6 +59,7 @@ Returns: An integer representing the number of times occ appear in string s
 Counts occurrences of substring occ in string s. The number of tokens can be
 found by adding 1 onto the return value.
 ====================*/
+```
 
 ### main.c
-Handles the forking an executing of commands...
+Handles the forking and executing of commands...
