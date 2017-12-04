@@ -3,23 +3,23 @@
 ## Features:
 -	Forks and executes commands!
 -	Parses multiple commands on one line through semicolons (;).
--	Stdin & stdout redirection allowed through < and >
--         Piping (|) works!
+-	Stdin & stdout redirection allowed through < and >.
+-	Piping (|) works!
 
 ## Attempted:
--         Feature to allow for multiple pipes and/or redirections in one command
+-	Feature to allow for multiple pipes and/or redirections in one command.
 
 ## Bugs:
 -	Tokens in echo cannot contain semicolons when piped. This is
           due to the method in which parsing is implemented.
           e.g. this will not work -> $ echo "ls; pwd; exit" | ./target
--         Stdout redirection may occasionally add bash prompts as part of
-          the output ("<shell>")
+-	Stdout redirection may occasionally add bash prompts as part of
+          the output ("<shell>").
           
 ## Files & Function Headers:
 
 ### parse.c
-Handles all line parsing fucntions
+Handles all line parsing functions.
 
 ```
 /*======== char **parse_input() =========
